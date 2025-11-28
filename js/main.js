@@ -553,10 +553,10 @@ function nodeActive(a) {
     });
     f = b.attr;
 if (f.attributes) {
-        var image_attribute = false;
-        if (config.informationPanel.imageAttribute) {
-            image_attribute=config.informationPanel.imageAttribute;
-        }
+  		var image_attribute = false;
+  		if (config.informationPanel.imageAttribute) {
+  			image_attribute=config.informationPanel.imageAttribute;
+  		}
 
         var e = []; // Array voor de attribute display HTML-fragmenten
         var addedAttributes = {}; // Houd bij welke attributen al zijn toegevoegd
@@ -573,14 +573,14 @@ if (f.attributes) {
                 var d = f.attributes[attrKey];
                 
                 // Maak de HTML string
-                var h = '<span><strong>' + attrKey + ':</strong> ' + d + '</span>'; 
+                var h = '<span><strong>' + attrKey + ':</strong> ' + d + '</span>';
                 
                 e.push(h);
                 addedAttributes[attrKey] = true;
             }
         }
         
-        // 3. Voeg de overige attributen toe (alleen degenen die nog niet zijn toegevoegd en niet de afbeelding)
+        // 3. Voeg de overige attributen toe
         for (var attr in f.attributes) {
             var d = f.attributes[attr];
             
@@ -590,13 +590,34 @@ if (f.attributes) {
             }
         }
 
-        if (image_attribute) {
-            //image_index = jQuery.inArray(image_attribute, temp_array);
-            $GP.info_name.html("<div><img src=" + f.attributes[image_attribute] + " style=\"vertical-align:middle; max-height:60px; max-width:60px; margin-right: 10px;\" /> <span onmouseover=\"sigInst._core.plotter.drawHoverNode(sigInst._core.graph.nodesIndex['" + b.id + '\'])" onmouseout="sigInst.refresh()">' + b.label + "</span></div>");
-        } else {
-            $GP.info_name.html("<div><span onmouseover=\"sigInst._core.plotter.drawHoverNode(sigInst._core.graph.nodesIndex['" + b.id + '\'])" onmouseout="sigInst.refresh()">' + b.label + "</span></div>");
+        // --- NIEUWE LOGICA VOOR LINKS ---
+        
+        // 4. Voeg de Wikidata link toe (gebruikt de node ID als Q-ID)
+        var qid = b.id;
+        // We gaan ervan uit dat de node ID (b.id) de Q-ID is, en de link is naar de hoofdnaamruimte
+        if (qid && qid.match(/^Q[0-9]+$/i)) {
+            var wikidata_url = 'https://www.wikidata.org/wiki/' + qid;
+            var wikidata_html = '<span><strong>Wikidata:</strong> <a href="' + wikidata_url + '" target="_blank">Bekijk item (' + qid + ')</a></span>';
+            e.push(wikidata_html);
         }
-        // Image field for attribute pane
+        
+        // 5. Voeg de Afbeelding URL link toe
+        if (image_attribute && f.attributes[image_attribute]) {
+            var image_url = f.attributes[image_attribute];
+            var image_link_html = '<span><strong>Afbeelding URL:</strong> <a href="' + image_url + '" target="_blank">Directe link</a></span>';
+            e.push(image_link_html);
+        }
+
+        // --- EINDE NIEUWE LOGICA ---
+
+        // De thumbnail-weergave (reeds aangepast voor max-height/width)
+        if (image_attribute) {
+        	$GP.info_name.html("<div><img src=" + f.attributes[image_attribute] + " style=\"vertical-align:middle; max-height:60px; max-width:60px; margin-right: 10px;\" /> <span onmouseover=\"sigInst._core.plotter.drawHoverNode(sigInst._core.graph.nodesIndex['" + b.id + '\'])" onmouseout="sigInst.refresh()">' + b.label + "</span></div>");
+        } else {
+        	$GP.info_name.html("<div><span onmouseover=\"sigInst._core.plotter.drawHoverNode(sigInst._core.graph.nodesIndex['" + b.id + '\'])" onmouseout="sigInst.refresh()">' + b.label + "</span></div>");
+        }
+        
+        // Geef alle attributen en links weer, gescheiden door <br/>
         $GP.info_data.html(e.join("<br/>"))
     }
     $GP.info_data.show();
