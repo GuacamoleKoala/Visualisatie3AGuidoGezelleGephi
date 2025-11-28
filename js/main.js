@@ -552,29 +552,49 @@ function nodeActive(a) {
             b = a.attr("rel");
     });
     f = b.attr;
-    if (f.attributes) {
-  		var image_attribute = false;
-  		if (config.informationPanel.imageAttribute) {
-  			image_attribute=config.informationPanel.imageAttribute;
-  		}
-        e = [];
-        temp_array = [];
-        g = 0;
+if (f.attributes) {
+        var image_attribute = false;
+        if (config.informationPanel.imageAttribute) {
+            image_attribute=config.informationPanel.imageAttribute;
+        }
+
+        var e = []; // Array voor de attribute display HTML-fragmenten
+        var addedAttributes = {}; // Houd bij welke attributen al zijn toegevoegd
+        
+        // 1. Definieer de gewenste volgorde
+        var priorityOrder = ['type', 'beroep', 'Modularity Class'];
+        
+        // 2. Voeg de geprioriteerde attributen toe in de gedefinieerde volgorde
+        for (var i = 0; i < priorityOrder.length; i++) {
+            var attrKey = priorityOrder[i];
+            
+            // Controleer of het attribuut bestaat in de data en niet het afbeelding-attribuut is
+            if (f.attributes[attrKey] !== undefined && attrKey !== image_attribute) {
+                var d = f.attributes[attrKey];
+                
+                // Maak de HTML string
+                var h = '<span><strong>' + attrKey + ':</strong> ' + d + '</span>'; 
+                
+                e.push(h);
+                addedAttributes[attrKey] = true;
+            }
+        }
+        
+        // 3. Voeg de overige attributen toe (alleen degenen die nog niet zijn toegevoegd en niet de afbeelding)
         for (var attr in f.attributes) {
-            var d = f.attributes[attr],
-                h = "";
-			if (attr!=image_attribute) {
-                h = '<span><strong>' + attr + ':</strong> ' + d + '</span><br/>'
-			}
-            //temp_array.push(f.attributes[g].attr);
-            e.push(h)
+            var d = f.attributes[attr];
+            
+            if (!addedAttributes[attr] && attr !== image_attribute) {
+                var h = '<span><strong>' + attr + ':</strong> ' + d + '</span>';
+                e.push(h);
+            }
         }
 
         if (image_attribute) {
-        	//image_index = jQuery.inArray(image_attribute, temp_array);
-        	$GP.info_name.html("<div><img src=" + f.attributes[image_attribute] + " style=\"vertical-align:middle\" /> <span onmouseover=\"sigInst._core.plotter.drawHoverNode(sigInst._core.graph.nodesIndex['" + b.id + '\'])" onmouseout="sigInst.refresh()">' + b.label + "</span></div>");
+            //image_index = jQuery.inArray(image_attribute, temp_array);
+            $GP.info_name.html("<div><img src=" + f.attributes[image_attribute] + " style=\"vertical-align:middle\" /> <span onmouseover=\"sigInst._core.plotter.drawHoverNode(sigInst._core.graph.nodesIndex['" + b.id + '\'])" onmouseout="sigInst.refresh()">' + b.label + "</span></div>");
         } else {
-        	$GP.info_name.html("<div><span onmouseover=\"sigInst._core.plotter.drawHoverNode(sigInst._core.graph.nodesIndex['" + b.id + '\'])" onmouseout="sigInst.refresh()">' + b.label + "</span></div>");
+            $GP.info_name.html("<div><span onmouseover=\"sigInst._core.plotter.drawHoverNode(sigInst._core.graph.nodesIndex['" + b.id + '\'])" onmouseout="sigInst.refresh()">' + b.label + "</span></div>");
         }
         // Image field for attribute pane
         $GP.info_data.html(e.join("<br/>"))
