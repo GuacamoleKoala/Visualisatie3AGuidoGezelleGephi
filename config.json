@@ -8,12 +8,12 @@
     "text": "Jenske Sampson"
   },
   "text": {
-    "more": "",
-    "intro": "This is a visualisation of the network of Guido Gezelle. \nThe graph shows people who are correspondents of Guido Gezelle and vice versa.\nIt shows to which institutions (education, work, members of association.\n",
+    "more": "The nodes show people (pink) and institutions (green). /nThe edges show the relations between people and institutions, such as work (purple), education (green) and association (orange).",
+    "intro": "This is a visualisation of the network of Guido Gezelle. \nThe graph shows people who are correspondents of Guido Gezelle and vice versa.\nIt shows to which institutions that people are connected (education, work, members of association.\n",
     "title": "Correspondents and Institutions of Guido Gezelle"
   },
   "legend": {
-    "edgeLabel": "Relationship",
+    "edgeLabel": "Relationship (education; green; work: purple; association; orange)",
     "colorLabel": "Zie Group Selector",
     "nodeLabel": "Person (pink) or institution (green)"
   },
