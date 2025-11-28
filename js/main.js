@@ -597,18 +597,15 @@ for (var i = 0; i < displayAttributes.length; i++) {
     if (attrValue) {
         var h = '';
         
-        // --- SPECIALE LOGICA VOOR BEROEP ---
-        if (attrConfig.key === 'beroep') {
-            // Splits de string op de komma en voeg lijnbreuken toe (<br/>)
-            // Dit garandeert dat alle beroepen op een nieuwe regel verschijnen.
-            var formattedValue = attrValue.split(',').join('<br/>');
-            h = '<span><strong>' + attrConfig.label + ':</strong> ' + formattedValue + '</span>';
-        } 
+        // *** WIJZIGING: DE SPECIALE LOGICA VOOR 'BEROEP' IS VERWIJDERD. ***
+        // De waarde wordt nu als één doorlopende string behandeld, gescheiden door een komma.
+        // De browser zal de tekst nu automatisch laten teruglopen (word-wrap) als deze te lang is.
+
         // --- LOGICA VOOR LINKS ---
-        else if (attrConfig.isLink) {
+        if (attrConfig.isLink) {
             h = '<span><strong>' + attrConfig.label + ':</strong> <a href="' + attrValue + '" target="_blank">' + attrValue + '</a></span>';
         } 
-        // --- LOGICA VOOR ALLE ANDERE REGULIERE ATTRIBUTEN ---
+        // --- LOGICA VOOR ALLE ANDERE REGULIERE ATTRIBUTEN (INCL. BEROEP) ---
         else {
             h = '<span><strong>' + attrConfig.label + ':</strong> ' + attrValue + '</span>';
         }
