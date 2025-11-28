@@ -449,25 +449,46 @@ function nodeActive(a) {
 	var groupByDirection=false;
 	if (config.informationPanel.groupByEdgeDirection && config.informationPanel.groupByEdgeDirection==true)	groupByDirection=true;
 	
-    sigInst.neighbors = {};
-    sigInst.detail = !0;
-    var b = sigInst._core.graph.nodesIndex[a];
-    showGroups(!1);
-	var outgoing={},incoming={},mutual={};//SAH
-    sigInst.iterEdges(function (b) {
-        b.attr.lineWidth = !1;
-        b.hidden = !0;
+sigInst.neighbors = {};
+sigInst.detail = !0;
+var b = sigInst._core.graph.nodesIndex[a];
+showGroups(!1);
+
+// --- NIEUWE GROEPERING PER RELATIETYPE ---
+var relatieBeroep = {};
+var relatieOnderwijs = {};
+var relatieAssociatie = {};
+// --- EINDE NIEUWE GROEPERING ---
+
+sigInst.iterEdges(function (b) {
+    b.attr.lineWidth = !1;
+    b.hidden = !0;
+    
+    var neighborID = (a == b.target) ? b.source : b.target;
+    // Edge attribuut: "relatie type" wordt gebruikt om te categoriseren
+    var relatieType = b.attr.attributes && b.attr.attributes["relatie type"]; 
+    
+    // Data die createList verwacht (edge label en edge kleur)
+    var n = {
+        name: b.label,
+        colour: b.color
+    };
+    
+    if (a == b.source || a == b.target) {
+        // Maak de rand zichtbaar
+        b.hidden = !1, b.attr.color = "rgba(0, 0, 0, 1)";
         
-        n={
-            name: b.label,
-            colour: b.color
-        };
-        
-   	   if (a==b.source) outgoing[b.target]=n;		//SAH
-	   else if (a==b.target) incoming[b.source]=n;		//SAH
-       if (a == b.source || a == b.target) sigInst.neighbors[a == b.target ? b.source : b.target] = n;
-       b.hidden = !1, b.attr.color = "rgba(0, 0, 0, 1)";
-    });
+        // Categorie bepalen en de buur toevoegen (ID als sleutel om duplicaten te voorkomen)
+        if (relatieType == "Werkgever") {
+            relatieBeroep[neighborID] = n;
+        } else if (relatieType == "Onderwijsinstelling") {
+            relatieOnderwijs[neighborID] = n;
+        } else if (relatieType == "Lid van") {
+            relatieAssociatie[neighborID] = n;
+        }
+    }
+});
+// De nodes zelf worden door createList zichtbaar gemaakt.
     var f = [];
     sigInst.iterNodes(function (a) {
         a.hidden = !0;
@@ -523,40 +544,43 @@ function nodeActive(a) {
 		return f;
 	}
 	
-	/*console.log("mutual:");
-	console.log(mutual);
-	console.log("incoming:");
-	console.log(incoming);
-	console.log("outgoing:");
-	console.log(outgoing);*/
-	
-	
-	var f=[];
-	
-	//console.log("neighbors:");
-	//console.log(sigInst.neighbors);
+	var f = [];
 
-	if (groupByDirection) {
-		size=Object.size(mutual);
-		f.push("<h2>Mututal (" + size + ")</h2>");
-		(size>0)? f=f.concat(createList(mutual)) : f.push("No mutual links<br>");
-		size=Object.size(incoming);
-		f.push("<h2>Incoming (" + size + ")</h2>");
-		(size>0)? f=f.concat(createList(incoming)) : f.push("No incoming links<br>");
-		size=Object.size(outgoing);
-		f.push("<h2>Outgoing (" + size + ")</h2>");
-		(size>0)? f=f.concat(createList(outgoing)) : f.push("No outgoing links<br>");
-	} else {
-		f=f.concat(createList(sigInst.neighbors));
-	}
-	//b is object of active node -- SAH
-    b.hidden = !1;
-    b.attr.color = b.color;
-    b.attr.lineWidth = 6;
-    b.attr.strokeStyle = "#000000";
-    sigInst.draw(2, 2, 2, 2);
+// 1. Ivm Beroep
+var sizeBeroep = Object.size(relatieBeroep);
+f.push("<h2>Ivm Beroep (" + sizeBeroep + ")</h2>");
+if (sizeBeroep > 0) {
+    f = f.concat(createList(relatieBeroep));
+} else {
+    f.push("<li class=\"no-membership\">Geen verbindingen ivm beroep.</li>");
+}
 
-    $GP.info_link.find("ul").html(f.join(""));
+// 2. Ivm Onderwijsinstelling
+var sizeOnderwijs = Object.size(relatieOnderwijs);
+f.push("<h2>Ivm Onderwijsinstelling (" + sizeOnderwijs + ")</h2>");
+if (sizeOnderwijs > 0) {
+    f = f.concat(createList(relatieOnderwijs));
+} else {
+    f.push("<li class=\"no-membership\">Geen verbindingen ivm onderwijsinstelling.</li>");
+}
+
+// 3. Ivm Associatie/Vereniging
+var sizeAssociatie = Object.size(relatieAssociatie);
+f.push("<h2>Ivm Associatie/Vereniging (" + sizeAssociatie + ")</h2>");
+if (sizeAssociatie > 0) {
+    f = f.concat(createList(relatieAssociatie));
+} else {
+    f.push("<li class=\"no-membership\">Geen verbindingen ivm associatie/vereniging.</li>");
+}
+
+//b is object of active node -- SAH
+b.hidden = !1;
+b.attr.color = b.color;
+b.attr.lineWidth = 6;
+b.attr.strokeStyle = "#000000";
+sigInst.draw(2, 2, 2, 2);
+
+$GP.info_link.find("ul").html(f.join(""));
     $GP.info_link.find("li").each(function () {
         var a = $(this),
             b = a.attr("rel");
