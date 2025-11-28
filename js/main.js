@@ -91,17 +91,19 @@ function initSigma(config) {
     dataReady = function() {//This is called as soon as data is loaded
 		a.clusters = {};
 
-		a.iterNodes(
-			function (b) { //This is where we populate the array used for the group select box
+		var groupAttribute = config.features.groupSelectorAttribute;
+a.iterNodes(
+    function (b) { //This is where we populate the array used for the group select box
+        // De groepssleutel is de waarde van het geconfigureerde attribuut, of de kleur als fallback (b.color)
+        var groupKey = b.color; 
+        if (groupAttribute && b.attr.attributes && b.attr.attributes[groupAttribute]) {
+             groupKey = b.attr.attributes[groupAttribute];
+        }
 
-				// note: index may not be consistent for all nodes. Should calculate each time. 
-				 // alert(JSON.stringify(b.attr.attributes[5].val));
-				// alert(b.x);
-				a.clusters[b.color] || (a.clusters[b.color] = []);
-				a.clusters[b.color].push(b.id);//SAH: push id not label
-			}
-		
-		);
+        a.clusters[groupKey] || (a.clusters[groupKey] = []);
+        a.clusters[groupKey].push(b.id);//SAH: push id not label
+    }
+);
 	
 		a.bind("upnodes", function (a) {
 		    nodeActive(a.content[0])
@@ -276,8 +278,16 @@ function configSigmaElements(config) {
     $GP.bg = $(sigInst._core.domElements.bg);
     $GP.bg2 = $(sigInst._core.domElements.bg2);
     var a = [],
-        b,x=1;
-		for (b in sigInst.clusters) a.push('<div style="line-height:12px"><a href="#' + b + '"><div style="width:40px;height:12px;border:1px solid #fff;background:' + b + ';display:inline-block"></div> Group ' + (x++) + ' (' + sigInst.clusters[b].length + ' members)</a></div>');
+        b; // 'b' is nu de groepssleutel, bijv. "Persoon" of "Instituut"
+    for (b in sigInst.clusters) {
+        var groupDisplay = b.toLowerCase();
+        
+        // Haal de kleur van de eerste node in de groep op voor het kleurenvakje
+        var nodeID = sigInst.clusters[b][0];
+        var nodeColor = sigInst._core.graph.nodesIndex[nodeID].color;
+
+        a.push('<div style="line-height:12px"><a href="#' + b + '"><div style="width:40px;height:12px;border:1px solid #fff;background:' + nodeColor + ';display:inline-block"></div> ' + groupDisplay + ' (' + sigInst.clusters[b].length + ' members)</a></div>');
+    }
     //a.sort();
     $GP.cluster.content(a.join(""));
     b = {
