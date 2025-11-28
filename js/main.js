@@ -587,7 +587,7 @@ var displayAttributes = [
     { key: 'wikicommonsrecord', label: 'Wikicommons Link', isLink: true, displayLabel: 'Wikicommons Link' }
 ];
 
-// Voeg de geprioriteerde attributen en links toe
+// NIEUWE CODE - start van de for loop met BEROEP fix
 for (var i = 0; i < displayAttributes.length; i++) {
     var attrConfig = displayAttributes[i];
     var attrKey = attrConfig.key;
@@ -595,14 +595,24 @@ for (var i = 0; i < displayAttributes.length; i++) {
     
     if (attrValue) {
         var h = '';
-        if (attrConfig.isLink) {
+        
+        // --- NIEUWE LOGICA VOOR BEROEP ---
+        if (attrConfig.key === 'beroep') {
+            // Splits de string op de komma en voeg lijnbreuken toe
+            var formattedValue = attrValue.split(',').join('<br/>');
+            h = '<span><strong>' + attrConfig.label + ':</strong> ' + formattedValue + '</span>';
+        } 
+        // --- BESTAANDE LOGICA VOOR LINKS EN REGULIERE ATTRIBUTEN ---
+        else if (attrConfig.isLink) {
             h = '<span><strong>' + attrConfig.label + ':</strong> <a href="' + attrValue + '" target="_blank">' + attrValue + '</a></span>';
         } else {
             h = '<span><strong>' + attrConfig.label + ':</strong> ' + attrValue + '</span>';
         }
+        
         e.push(h);
     }
 }
+// NIEUWE CODE - einde van de for loop
         
         // Verwerk de image_attribute als een speciale link/weergave
         if (image_attribute && f_attributes.attributes[image_attribute]) {
