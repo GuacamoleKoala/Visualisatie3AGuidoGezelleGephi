@@ -578,30 +578,31 @@ function nodeActive(a) {
     
         e = [];
         // Aangepaste lijst met attributen om weer te geven
-        var displayAttributes = [
-            { key: 'type', label: 'Type', isLink: false },
-            { key: 'specifictype', label: 'Specific Type', isLink: false },
-            { key: 'wikidatarecord', label: 'Wikidata Record', isLink: true, displayLabel: 'Wikidata Record' },
-            { key: 'wikipediarecord', label: 'Wikipedia Link', isLink: true, displayLabel: 'Wikipedia Link' },
-            { key: 'wikicommonsrecord', label: 'Wikicommons Link', isLink: true, displayLabel: 'Wikicommons Link' }
-        ];
+var displayAttributes = [
+    { key: 'type', label: 'Type', isLink: false },
+    { key: 'specifictype', label: 'Specific Type', isLink: false },
+    { key: 'beroep', label: 'Beroep', isLink: false }, // <--- HET NIEUWE BEROEP ATTRIBUUT
+    { key: 'wikidatarecord', label: 'Wikidata Record', isLink: true, displayLabel: 'Wikidata Record' },
+    { key: 'wikipediarecord', label: 'Wikipedia Link', isLink: true, displayLabel: 'Wikipedia Link' },
+    { key: 'wikicommonsrecord', label: 'Wikicommons Link', isLink: true, displayLabel: 'Wikicommons Link' }
+];
 
-        // Voeg de geprioriteerde attributen en links toe
-        for (var i = 0; i < displayAttributes.length; i++) {
-            var attrConfig = displayAttributes[i];
-            var attrKey = attrConfig.key;
-            var attrValue = f_attributes.attributes[attrKey];
-            
-            if (attrValue) {
-                var h = '';
-                if (attrConfig.isLink) {
-                    h = '<span><strong>' + attrConfig.label + ':</strong> <a href="' + attrValue + '" target="_blank">' + attrValue + '</a></span>';
-                } else {
-                    h = '<span><strong>' + attrConfig.label + ':</strong> ' + attrValue + '</span>';
-                }
-                e.push(h);
-            }
+// Voeg de geprioriteerde attributen en links toe
+for (var i = 0; i < displayAttributes.length; i++) {
+    var attrConfig = displayAttributes[i];
+    var attrKey = attrConfig.key;
+    var attrValue = f_attributes.attributes[attrKey];
+    
+    if (attrValue) {
+        var h = '';
+        if (attrConfig.isLink) {
+            h = '<span><strong>' + attrConfig.label + ':</strong> <a href="' + attrValue + '" target="_blank">' + attrValue + '</a></span>';
+        } else {
+            h = '<span><strong>' + attrConfig.label + ':</strong> ' + attrValue + '</span>';
         }
+        e.push(h);
+    }
+}
         
         // Verwerk de image_attribute als een speciale link/weergave
         if (image_attribute && f_attributes.attributes[image_attribute]) {
