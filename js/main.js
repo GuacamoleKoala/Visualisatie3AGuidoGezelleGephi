@@ -20,16 +20,16 @@ function GetQueryStringParams(sParam,defaultVal) {
 
 
 jQuery.getJSON(GetQueryStringParams("config","config.json"), function(data, textStatus, jqXHR) {
-    config=data;
-    
-    if (config.type!="network") {
-        //bad config
-        alert("Invalid configuration settings.")
-        return;
-    }
-    
-    //As soon as page is ready (and data ready) set up it
-    $(document).ready(setupGUI(config));
+	config=data;
+	
+	if (config.type!="network") {
+		//bad config
+		alert("Invalid configuration settings.")
+		return;
+	}
+	
+	//As soon as page is ready (and data ready) set up it
+	$(document).ready(setupGUI(config));
 });//End JSON Config load
 
 
@@ -44,13 +44,13 @@ Object.size = function(obj) {
 };
 
 function initSigma(config) {
-    var data=config.data
-    
-    var drawProps, graphProps,mouseProps;
-    if (config.sigma && config.sigma.drawingProperties)    
-        drawProps=config.sigma.drawingProperties;
-    else
-        drawProps={
+	var data=config.data
+	
+	var drawProps, graphProps,mouseProps;
+	if (config.sigma && config.sigma.drawingProperties) 
+		drawProps=config.sigma.drawingProperties;
+	else
+		drawProps={
         defaultLabelColor: "#000",
         defaultLabelSize: 14,
         defaultLabelBGColor: "#ddd",
@@ -63,24 +63,24 @@ function initSigma(config) {
         activeFontStyle: "bold"
     };
     
-    if (config.sigma && config.sigma.graphProperties)      
-        graphProps=config.sigma.graphProperties;
+    if (config.sigma && config.sigma.graphProperties)	
+    	graphProps=config.sigma.graphProperties;
     else
-        graphProps={
+    	graphProps={
         minNodeSize: 1,
         maxNodeSize: 7,
         minEdgeSize: 0.2,
         maxEdgeSize: 0.5
-        };
-    
-    if (config.sigma && config.sigma.mouseProperties)
-        mouseProps=config.sigma.mouseProperties;
-    else
-        mouseProps={
+    	};
+	
+	if (config.sigma && config.sigma.mouseProperties) 
+		mouseProps=config.sigma.mouseProperties;
+	else
+		mouseProps={
         minRatio: 0.75, // How far can we zoom out?
         maxRatio: 20, // How far can we zoom in?
-        };
-    
+    	};
+	
     var a = sigma.init(document.getElementById("sigma-canvas")).drawingProperties(drawProps).graphProperties(graphProps).mouseProperties(mouseProps);
     sigInst = a;
     a.active = !1;
@@ -89,94 +89,98 @@ function initSigma(config) {
 
 
     dataReady = function() {//This is called as soon as data is loaded
-        a.clusters = {};
+		a.clusters = {};
+        a.clusterNames = {}; // Object om kleur aan attribuutnaam te koppelen
+        
+        var groupAttrKey = config.features.groupSelectorAttribute;
 
-        var groupAttribute = config.features.groupSelectorAttribute;
-a.iterNodes(
-    function (b) { //This is where we populate the array used for the group select box
-        // De groepssleutel is de waarde van het geconfigureerde attribuut, of de kleur als fallback (b.color)
-        var groupKey = b.color; 
-        if (groupAttribute && b.attr.attributes && b.attr.attributes[groupAttribute]) {
-             groupKey = b.attr.attributes[groupAttribute];
-        }
+		a.iterNodes(
+			function (b) { 
+				// Groeperen blijft op kleur om de functionaliteit van de Sigma.js-kern te behouden
+				a.clusters[b.color] || (a.clusters[b.color] = []);
+				a.clusters[b.color].push(b.id);
 
-        a.clusters[groupKey] || (a.clusters[groupKey] = []);
-        a.clusters[groupKey].push(b.id);//SAH: push id not label
-    }
-);
-    
-        a.bind("upnodes", function (a) {
-            nodeActive(a.content[0])
-        });
+                // ClusterNames vullen met de groepsnaam voor weergave in het keuzemenu
+                var groupName = b.attr.attributes[groupAttrKey];
+                if (groupName) {
+                    a.clusterNames[b.color] = groupName; // Map kleur aan groepsnaam
+                }
+			}
+		
+		);
+	
+		a.bind("upnodes", function (a) {
+		    nodeActive(a.content[0])
+		});
 
-        a.draw();
-        configSigmaElements(config);
-    }
+		a.draw();
+		configSigmaElements(config);
+	}
 
     if (data.indexOf("gexf")>0 || data.indexOf("xml")>0)
         a.parseGexf(data,dataReady);
     else
-        a.parseJson(data,dataReady);
+	    a.parseJson(data,dataReady);
     gexf = sigmaInst = null;
 }
 
 
 function setupGUI(config) {
-    // Initialise main interface elements
-    var logo=""; // Logo elements
-    if (config.logo.file) {
+	// Initialise main interface elements
+	var logo=""; // Logo elements
+	if (config.logo.file) {
 
-        logo = "<img src=\"" + config.logo.file +"\"";
-        if (config.logo.text) logo+=" alt=\"" + config.logo.text + "\"";
-        logo+=">";
-    } else if (config.logo.text) {
-        logo="<h1>"+config.logo.text+"</h1>";
-    }
-    if (config.logo.link) logo="<a href=\"" + config.logo.link + "\">"+logo+"</a>";
-    $("#maintitle").html(logo);
+		logo = "<img src=\"" + config.logo.file +"\"";
+		if (config.logo.text) logo+=" alt=\"" + config.logo.text + "\"";
+		logo+=">";
+	} else if (config.logo.text) {
+		logo="<h1>"+config.logo.text+"</h1>";
+	}
+	if (config.logo.link) logo="<a href=\"" + config.logo.link + "\">"+logo+"</a>";
+	$("#maintitle").html(logo);
 
-    // #title
-    $("#title").html("<h2>"+config.text.title+"</h2>");
+	// #title
+	$("#title").html("<h2>"+config.text.title+"</h2>");
 
-    // #titletext
-    $("#titletext").html(config.text.intro);
+	// #titletext
+	$("#titletext").html(config.text.intro);
 
-    // More information
-    if (config.text.more) {
-        $("#information").html(config.text.more);
-    } else {
-        //hide more information link
-        $("#moreinformation").hide();
-    }
+	// More information
+	if (config.text.more) {
+		$("#information").html(config.text.more);
+	} else {
+		//hide more information link
+		$("#moreinformation").hide();
+	}
 
-    // Legend
+	// Legend
 
-    // Node
-    if (config.legend.nodeLabel) {
-        $(".node").next().html(config.legend.nodeLabel);
-    } else {
-        //hide more information link
-        $(".node").hide();
-    }
-    // Edge
-    if (config.legend.edgeLabel) {
-        $(".edge").next().html(config.legend.edgeLabel);
-    } else {
-        //hide more information link
-        $(".edge").hide();
-    }
-    // Colours
-    if (config.legend.nodeLabel) {
-        $(".colours").next().html(config.legend.colorLabel);
-    } else {
-        //hide more information link
-        $(".colours").hide();
-    }
+	// Node
+	if (config.legend.nodeLabel) {
+		$(".node").next().html(config.legend.nodeLabel);
+	} else {
+		//hide more information link
+		$(".node").hide();
+	}
+	// Edge
+	if (config.legend.edgeLabel) {
+		$(".edge").next().html(config.legend.edgeLabel);
+	} else {
+		//hide more information link
+		$(".edge").hide();
+	}
+	// Colours
+	if (config.legend.nodeLabel) {
+		$(".colours").next().html(config.legend.colorLabel);
+	} else {
+		//hide more information link
+		$(".colours").hide();
+	}
 
-    $GP = {
-        calculating: !1,
-        showgroup: !1
-    };
+	$GP = {
+		calculating: !1,
+		showgroup: !1
+	};
     $GP.intro = $("#intro");
     $GP.minifier = $GP.intro.find("#minifier");
     $GP.mini = $("#minify");
@@ -193,119 +197,116 @@ function setupGUI(config) {
     $GP.form = $("#mainpanel").find("form");
     $GP.search = new Search($GP.form.find("#search"));
     if (!config.features.search) {
-        $("#search").hide();
-    }
-    if (!config.features.groupSelectorAttribute) {
-        $("#attributeselect").hide();
-    }
+		$("#search").hide();
+	}
+	if (!config.features.groupSelectorAttribute) {
+		$("#attributeselect").hide();
+	}
     $GP.cluster = new Cluster($GP.form.find("#attributeselect"));
     config.GP=$GP;
     initSigma(config);
 }
 
 function configSigmaElements(config) {
-    $GP=config.GP;
+	$GP=config.GP;
     
     // Node hover behaviour
     if (config.features.hoverBehavior == "dim") {
 
-        var greyColor = '#ccc';
-        sigInst.bind('overnodes',function(event){
-        var nodes = event.content;
-        var neighbors = {};
-        sigInst.iterEdges(function(e){
-        if(nodes.indexOf(e.source)<0 && nodes.indexOf(e.target)<0){
-            if(!e.attr['grey']){
-                e.attr['true_color'] = e.color;
-                e.color = greyColor;
-                e.attr['grey'] = 1;
-            }
-        }else{
-            e.color = e.attr['grey'] ? e.attr['true_color'] : e.color;
-            e.attr['grey'] = 0;
+		var greyColor = '#ccc';
+		sigInst.bind('overnodes',function(event){
+		var nodes = event.content;
+		var neighbors = {};
+		sigInst.iterEdges(function(e){
+		if(nodes.indexOf(e.source)<0 && nodes.indexOf(e.target)<0){
+			if(!e.attr['grey']){
+				e.attr['true_color'] = e.color;
+				e.color = greyColor;
+				e.attr['grey'] = 1;
+			}
+		}else{
+			e.color = e.attr['grey'] ? e.attr['true_color'] : e.color;
+			e.attr['grey'] = 0;
 
-            neighbors[e.source] = 1;
-            neighbors[e.target] = 1;
-        }
-        }).iterNodes(function(n){
-            if(!neighbors[n.id]){
-                if(!n.attr['grey']){
-                    n.attr['true_color'] = n.color;
-                    n.color = greyColor;
-                    n.attr['grey'] = 1;
-                }
-            }else{
-                n.color = n.attr['grey'] ? n.attr['true_color'] : n.color;
-                n.attr['grey'] = 0;
-            }
-        }).draw(2,2,2);
-        }).bind('outnodes',function(){
-        sigInst.iterEdges(function(e){
-            e.color = e.attr['grey'] ? e.attr['true_color'] : e.color;
-            e.attr['grey'] = 0;
-        }).iterNodes(function(n){
-            n.color = n.attr['grey'] ? n.attr['true_color'] : n.color;
-            n.attr['grey'] = 0;
-        }).draw(2,2,2);
-        });
+			neighbors[e.source] = 1;
+			neighbors[e.target] = 1;
+		}
+		}).iterNodes(function(n){
+			if(!neighbors[n.id]){
+				if(!n.attr['grey']){
+					n.attr['true_color'] = n.color;
+					n.color = greyColor;
+					n.attr['grey'] = 1;
+				}
+			}else{
+				n.color = n.attr['grey'] ? n.attr['true_color'] : n.color;
+				n.attr['grey'] = 0;
+			}
+		}).draw(2,2,2);
+		}).bind('outnodes',function(){
+		sigInst.iterEdges(function(e){
+			e.color = e.attr['grey'] ? e.attr['true_color'] : e.color;
+			e.attr['grey'] = 0;
+		}).iterNodes(function(n){
+			n.color = n.attr['grey'] ? n.attr['true_color'] : n.color;
+			n.attr['grey'] = 0;
+		}).draw(2,2,2);
+		});
 
     } else if (config.features.hoverBehavior == "hide") {
 
-        sigInst.bind('overnodes',function(event){
-            var nodes = event.content;
-            var neighbors = {};
-        sigInst.iterEdges(function(e){
-            if(nodes.indexOf(e.source)>=0 || nodes.indexOf(e.target)>=0){
-                neighbors[e.source] = 1;
-                neighbors[e.target] = 1;
-              }
-        }).iterNodes(function(n){
-              if(!neighbors[n.id]){
-                n.hidden = 1;
-              }else{
-                n.hidden = 0;
-            }
-        }).draw(2,2,2);
-        }).bind('outnodes',function(){
-        sigInst.iterEdges(function(e){
-              e.hidden = 0;
-        }).iterNodes(function(n){
-              n.hidden = 0;
-        }).draw(2,2,2);
-        });
+		sigInst.bind('overnodes',function(event){
+			var nodes = event.content;
+			var neighbors = {};
+		sigInst.iterEdges(function(e){
+			if(nodes.indexOf(e.source)>=0 || nodes.indexOf(e.target)>=0){
+		    	neighbors[e.source] = 1;
+		    	neighbors[e.target] = 1;
+		  	}
+		}).iterNodes(function(n){
+		  	if(!neighbors[n.id]){
+		    	n.hidden = 1;
+		  	}else{
+		    	n.hidden = 0;
+		  }
+		}).draw(2,2,2);
+		}).bind('outnodes',function(){
+		sigInst.iterEdges(function(e){
+		  	e.hidden = 0;
+		}).iterNodes(function(n){
+		  	n.hidden = 0;
+		}).draw(2,2,2);
+		});
 
     }
     $GP.bg = $(sigInst._core.domElements.bg);
     $GP.bg2 = $(sigInst._core.domElements.bg2);
     var a = [],
-        b; // 'b' is nu de groepssleutel, bijv. "Persoon" of "Instituut"
-    for (b in sigInst.clusters) {
-        var groupDisplay = b.toLowerCase();
-        
-        // Haal de kleur van de eerste node in de groep op voor het kleurenvakje
-        var nodeID = sigInst.clusters[b][0];
-        var nodeColor = sigInst._core.graph.nodesIndex[nodeID].color;
-
-        a.push('<div style="line-height:12px"><a href="#' + b + '"><div style="width:40px;height:12px;border:1px solid #fff;background:' + nodeColor + ';display:inline-block"></div> ' + groupDisplay + ' (' + sigInst.clusters[b].length + ' members)</a></div>');
-    }
+        b,x=1;
+		// MODIFIED: Gebruik sigInst.clusterNames om de naam van het attribuut weer te geven
+		for (b in sigInst.clusters) {
+            // Gebruik de toegewezen naam, anders een fallback op basis van kleur
+            var groupName = sigInst.clusterNames[b] || 'Groep ' + (x++);
+            a.push('<div style="line-height:12px"><a href="#' + b + '"><div style="width:40px;height:12px;border:1px solid #fff;background:' + b + ';display:inline-block"></div> ' + groupName + ' (' + sigInst.clusters[b].length + ' members)</a></div>');
+        }
     //a.sort();
     $GP.cluster.content(a.join(""));
     b = {
         minWidth: 400,
         maxWidth: 800,
         maxHeight: 600
-    };//      minHeight: 300,
+    };//        minHeight: 300,
     $("a.fb").fancybox(b);
     $("#zoom").find("div.z").each(function () {
         var a = $(this),
             b = a.attr("rel");
         a.click(function () {
-            if (b == "center") {
-                sigInst.position(0,0,1).draw();
-            } else {
-                var a = sigInst._core;
-                sigInst.zoomTo(a.domElements.nodes.width / 2, a.domElements.nodes.height / 2, a.mousecaptor.ratio * ("in" == b ? 1.5 : 0.5));          
-            }
+			if (b == "center") {
+				sigInst.position(0,0,1).draw();
+			} else {
+		        var a = sigInst._core;
+	            sigInst.zoomTo(a.domElements.nodes.width / 2, a.domElements.nodes.height / 2, a.mousecaptor.ratio * ("in" == b ? 1.5 : 0.5));		
+			}
 
         })
     });
@@ -332,7 +333,7 @@ function configSigmaElements(config) {
         break;
     default:
         $GP.search.exactMatch = !0, $GP.search.search(a)
-        $GP.search.clean();
+		$GP.search.clean();
     }
 
 }
@@ -394,7 +395,7 @@ function Search(a) {
             1 < a.length && this.results.html(a.join(""));
            }
         if(c.length!=1) this.results.show();
-        if(c.length==1) this.results.hide();    
+        if(c.length==1) this.results.hide();   
     }
 }
 
@@ -446,9 +447,7 @@ function nodeNormal() {
 
 function nodeActive(a) {
 
-    var groupByDirection=false;
-    if (config.informationPanel.groupByEdgeDirection && config.informationPanel.groupByEdgeDirection==true)       groupByDirection=true;
-    
+    // Herstel de basisfunctionaliteit
     sigInst.neighbors = {};
     sigInst.detail = !0;
     var b = sigInst._core.graph.nodesIndex[a];
@@ -497,7 +496,7 @@ function nodeActive(a) {
         a.attr.color = a.color
     });
     
-    // 3. De createList functie om de HTML voor de burenlijst te genereren
+    // 3. De createList functie, nu lokaal gedefinieerd zodat deze beschikbaar is
     var createList=function(c) {
         var f_html = [];
         var e = [],
@@ -577,49 +576,43 @@ function nodeActive(a) {
             image_attribute=config.informationPanel.imageAttribute;
         }
     
-        var e = []; // Array voor de attribute display HTML-fragmenten
-        var addedAttributes = {}; 
-        
-        // Geprioriteerde attributen toevoegen
-        var priorityOrder = ['type', 'beroep', 'Modularity Class'];
-        for (var i = 0; i < priorityOrder.length; i++) {
-            var attrKey = priorityOrder[i];
-            if (f_attributes.attributes[attrKey] !== undefined && attrKey !== image_attribute) {
-                var d = f_attributes.attributes[attrKey];
-                var h = '<span><strong>' + attrKey + ':</strong> ' + d + '</span>';
+        e = [];
+        // Aangepaste lijst met attributen om weer te geven
+        var displayAttributes = [
+            { key: 'type', label: 'Type', isLink: false },
+            { key: 'specifictype', label: 'Specific Type', isLink: false },
+            { key: 'wikidatarecord', label: 'Wikidata Record', isLink: true, displayLabel: 'Wikidata Record' },
+            { key: 'wikipediarecord', label: 'Wikipedia Link', isLink: true, displayLabel: 'Wikipedia Link' },
+            { key: 'wikicommonsrecord', label: 'Wikicommons Link', isLink: true, displayLabel: 'Wikicommons Link' }
+        ];
+
+        // Voeg de geprioriteerde attributen en links toe
+        for (var i = 0; i < displayAttributes.length; i++) {
+            var attrConfig = displayAttributes[i];
+            var attrKey = attrConfig.key;
+            var attrValue = f_attributes.attributes[attrKey];
+            
+            if (attrValue) {
+                var h = '';
+                if (attrConfig.isLink) {
+                    h = '<span><strong>' + attrConfig.label + ':</strong> <a href="' + attrValue + '" target="_blank">' + attrValue + '</a></span>';
+                } else {
+                    h = '<span><strong>' + attrConfig.label + ':</strong> ' + attrValue + '</span>';
+                }
                 e.push(h);
-                addedAttributes[attrKey] = true;
             }
         }
         
-        // Overige attributen toevoegen
-        for (var attr in f_attributes.attributes) {
-            var d = f_attributes.attributes[attr];
-            if (!addedAttributes[attr] && attr !== image_attribute) {
-                var h = '<span><strong>' + attr + ':</strong> ' + d + '</span>';
-                e.push(h);
-            }
-        }
-    
-        // Links toevoegen (Wikidata/Afbeelding)
-        var qid = b.id;
-        if (qid && qid.match(/^Q[0-9]+$/i)) {
-            var wikidata_url = 'https://www.wikidata.org/wiki/' + qid;
-            var wikidata_html = '<span><strong>Wikidata:</strong> <a href="' + wikidata_url + '" target="_blank">Bekijk item (' + qid + ')</a></span>';
-            e.push(wikidata_html);
-        }
-        
+        // Verwerk de image_attribute als een speciale link/weergave
         if (image_attribute && f_attributes.attributes[image_attribute]) {
             var image_url = f_attributes.attributes[image_attribute];
             var image_link_html = '<span><strong>Afbeelding URL:</strong> <a href="' + image_url + '" target="_blank">Directe link</a></span>';
             e.push(image_link_html);
-        }
-    
-        // De naam en eventuele afbeelding in het paneel tonen
-        if (image_attribute && f_attributes.attributes[image_attribute]) {
-            $GP.info_name.html("<div><img src=" + f_attributes.attributes[image_attribute] + " style=\"vertical-align:middle; max-height:60px; max-width:60px; margin-right: 10px;\" /> <span onmouseover=\"sigInst._core.plotter.drawHoverNode(sigInst._core.graph.nodesIndex['" + b.id + '\'])" onmouseout="sigInst.refresh()">' + b.label + "</span></div>");
+
+            // Toon de naam en de afbeelding
+        	$GP.info_name.html("<div><img src=" + image_url + " style=\"width: 60px; height: 60px; object-fit: cover; margin-right: 5px; vertical-align:middle;\" /> <span onmouseover=\"sigInst._core.plotter.drawHoverNode(sigInst._core.graph.nodesIndex['" + b.id + '\'])" onmouseout="sigInst.refresh()">' + b.label + "</span></div>");
         } else {
-            $GP.info_name.html("<div><span onmouseover=\"sigInst._core.plotter.drawHoverNode(sigInst._core.graph.nodesIndex['" + b.id + '\'])" onmouseout="sigInst.refresh()">' + b.label + "</span></div>");
+        	$GP.info_name.html("<div><span onmouseover=\"sigInst._core.plotter.drawHoverNode(sigInst._core.graph.nodesIndex['" + b.id + '\'])" onmouseout="sigInst.refresh()">' + b.label + "</span></div>");
         }
         
         // Geef alle attributen en links weer
@@ -656,13 +649,14 @@ function showCluster(a) {
         }
         sigInst.clusters[a] = e;
         sigInst.draw(2, 2, 2, 2);
-        $GP.info_name.html("<b>" + a + "</b>");
+        // MODIFIED: Gebruik de toegewezen naam in de cluster header
+        $GP.info_name.html("<b>" + (sigInst.clusterNames[a] || a) + "</b>");
         $GP.info_data.hide();
         $GP.info_p.html("Group Members:");
         $GP.info_link.find("ul").html(f.join(""));
         $GP.info.animate({width:'show'},350);
         $GP.search.clean();
-        $GP.cluster.hide();
+		$GP.cluster.hide();
         return !0
     }
     return !1
