@@ -578,16 +578,17 @@ function nodeActive(a) {
     
         e = [];
         // Aangepaste lijst met attributen om weer te geven
+// Aangepaste lijst met attributen om weer te geven
 var displayAttributes = [
     { key: 'type', label: 'Type', isLink: false },
     { key: 'specifictype', label: 'Specific Type', isLink: false },
-    { key: 'beroep', label: 'Beroep', isLink: false }, // <--- HET NIEUWE BEROEP ATTRIBUUT
+    { key: 'beroep', label: 'Beroep', isLink: false }, // Inclusief 'beroep'
     { key: 'wikidatarecord', label: 'Wikidata Record', isLink: true, displayLabel: 'Wikidata Record' },
     { key: 'wikipediarecord', label: 'Wikipedia Link', isLink: true, displayLabel: 'Wikipedia Link' },
     { key: 'wikicommonsrecord', label: 'Wikicommons Link', isLink: true, displayLabel: 'Wikicommons Link' }
 ];
 
-// NIEUWE CODE - start van de for loop met BEROEP fix
+// Voeg de geprioriteerde attributen en links toe
 for (var i = 0; i < displayAttributes.length; i++) {
     var attrConfig = displayAttributes[i];
     var attrKey = attrConfig.key;
@@ -596,16 +597,19 @@ for (var i = 0; i < displayAttributes.length; i++) {
     if (attrValue) {
         var h = '';
         
-        // --- NIEUWE LOGICA VOOR BEROEP ---
+        // --- SPECIALE LOGICA VOOR BEROEP ---
         if (attrConfig.key === 'beroep') {
-            // Splits de string op de komma en voeg lijnbreuken toe
+            // Splits de string op de komma en voeg lijnbreuken toe (<br/>)
+            // Dit garandeert dat alle beroepen op een nieuwe regel verschijnen.
             var formattedValue = attrValue.split(',').join('<br/>');
             h = '<span><strong>' + attrConfig.label + ':</strong> ' + formattedValue + '</span>';
         } 
-        // --- BESTAANDE LOGICA VOOR LINKS EN REGULIERE ATTRIBUTEN ---
+        // --- LOGICA VOOR LINKS ---
         else if (attrConfig.isLink) {
             h = '<span><strong>' + attrConfig.label + ':</strong> <a href="' + attrValue + '" target="_blank">' + attrValue + '</a></span>';
-        } else {
+        } 
+        // --- LOGICA VOOR ALLE ANDERE REGULIERE ATTRIBUTEN ---
+        else {
             h = '<span><strong>' + attrConfig.label + ':</strong> ' + attrValue + '</span>';
         }
         
