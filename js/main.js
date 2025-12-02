@@ -446,18 +446,23 @@ function nodeNormal() {
 }
 
 function nodeActive(a) {
+    
+    var groupByDirection = false;
+    // We gebruiken deze instelling om de algemene 'incoming'/'outgoing' structuur (de standaardinstelling) te overschrijven.
+    // De setting in config.json is 'groupByEdgeDirection': true, maar we gaan hier een *eigengemaakte* groepering implementeren.
+    // We laten deze variabele staan voor compatibiliteit, maar onze custom logica zal domineren.
 
-    // Herstel de basisfunctionaliteit
     sigInst.neighbors = {};
     sigInst.detail = !0;
     var b = sigInst._core.graph.nodesIndex[a];
     showGroups(!1);
     
-    // --- CATEGORISATIE VAN VERBINDINGEN ---
-    // Drie objecten om de buren per categorie te bewaren
-    var relatieBeroep = {};
-    var relatieOnderwijs = {};
-    var relatieAssociatie = {};
+    // --- CATEGORISATIE VAN VERBINDINGEN (CUSTOM) ---
+    // Objecten om de buren per categorie te bewaren
+    var relatieGeboorte = {};
+    var relatieSterfte = {};
+    var relatieWerk = {};
+    var relatieWoon = {};
     
     // 1. Itereer over alle randen om de buren te categoriseren en het netwerk te markeren
     sigInst.iterEdges(function (c) {
@@ -465,8 +470,10 @@ function nodeActive(a) {
         c.hidden = !0;
         
         var neighborID = (a == c.target) ? c.source : c.target;
+        
         // Haal het relatietype op uit de attributen van de rand
-        var relatieType = c.attr.attributes && c.attr.attributes["relatie type"]; 
+        // Gebaseerd op data(1).json: het attribuut heet "relationshiptype"
+        var relatieType = c.attr.attributes && c.attr.attributes.relationshiptype; 
         
         // Data die nodig is voor createList (edge label en edge kleur)
         var n = {
@@ -477,14 +484,17 @@ function nodeActive(a) {
         if (a == c.source || a == c.target) {
             // Maak de rand zichtbaar
             c.hidden = !1, c.attr.color = "rgba(0, 0, 0, 1)";
-            
+
             // Categorie bepalen en de buur toevoegen (ID als sleutel om duplicaten te voorkomen)
-            if (relatieType == "Werkgever") {
-                relatieBeroep[neighborID] = n;
-            } else if (relatieType == "Onderwijsinstelling") {
-                relatieOnderwijs[neighborID] = n;
-            } else if (relatieType == "Lid van") {
-                relatieAssociatie[neighborID] = n;
+            // Dit is het kritieke deel: we mappen de relatietype-waarden uit data.json naar onze categorieën
+            if (relatieType == "Geboorteplaats") {
+                relatieGeboorte[neighborID] = n;
+            } else if (relatieType == "Sterfteplaats") {
+                relatieSterfte[neighborID] = n;
+            } else if (relatieType == "Werklocatie") { // Gebaseerd op je data: 'Werklocatie'
+                relatieWerk[neighborID] = n;
+            } else if (relatieType == "Woonplaats") { // Gebaseerd op je data: 'Woonplaats'
+                relatieWoon[neighborID] = n;
             }
         }
     });
@@ -496,7 +506,7 @@ function nodeActive(a) {
         a.attr.color = a.color
     });
     
-    // 3. De createList functie, nu lokaal gedefinieerd zodat deze beschikbaar is
+    // 3. De createList functie (onveranderd)
     var createList=function(c) {
         var f_html = [];
         var e = [],
@@ -527,34 +537,43 @@ function nodeActive(a) {
         return f_html;
     }
     
-    // 4. Genereer de HTML voor het verbindingspaneel met de groeperingen
+    // 4. Genereer de HTML voor het verbindingspaneel met de nieuwe groeperingen
     var f_list = [];
     
-    // Ivm Beroep
-    var sizeBeroep = Object.size(relatieBeroep);
-    f_list.push("<h2>Ivm Beroep (" + sizeBeroep + ")</h2>");
-    if (sizeBeroep > 0) {
-        f_list = f_list.concat(createList(relatieBeroep));
+    // Ivm Geboorteplaats
+    var sizeGeboorte = Object.size(relatieGeboorte);
+    f_list.push("<h2>Geboorteplaats (" + sizeGeboorte + ")</h2>");
+    if (sizeGeboorte > 0) {
+        f_list = f_list.concat(createList(relatieGeboorte));
     } else {
-        f_list.push("<li class=\"no-membership\">Geen verbindingen ivm beroep.</li>");
+        f_list.push("<li class=\"no-membership\">Geen verbindingen ivm geboorteplaats.</li>");
     }
     
-    // Ivm Onderwijsinstelling
-    var sizeOnderwijs = Object.size(relatieOnderwijs);
-    f_list.push("<h2>Ivm Onderwijsinstelling (" + sizeOnderwijs + ")</h2>");
-    if (sizeOnderwijs > 0) {
-        f_list = f_list.concat(createList(relatieOnderwijs));
+    // Ivm Sterfteplaats
+    var sizeSterfte = Object.size(relatieSterfte);
+    f_list.push("<h2>Plaats van overlijden (" + sizeSterfte + ")</h2>");
+    if (sizeSterfte > 0) {
+        f_list = f_list.concat(createList(relatieSterfte));
     } else {
-        f_list.push("<li class=\"no-membership\">Geen verbindingen ivm onderwijsinstelling.</li>");
+        f_list.push("<li class=\"no-membership\">Geen verbindingen ivm plaats van overlijden.</li>");
     }
     
-    // Ivm Associatie/Vereniging
-    var sizeAssociatie = Object.size(relatieAssociatie);
-    f_list.push("<h2>Ivm Associatie/Vereniging (" + sizeAssociatie + ")</h2>");
-    if (sizeAssociatie > 0) {
-        f_list = f_list.concat(createList(relatieAssociatie));
+    // Ivm Werklocatie
+    var sizeWerk = Object.size(relatieWerk);
+    f_list.push("<h2>Werkplaatsen (" + sizeWerk + ")</h2>");
+    if (sizeWerk > 0) {
+        f_list = f_list.concat(createList(relatieWerk));
     } else {
-        f_list.push("<li class=\"no-membership\">Geen verbindingen ivm associatie/vereniging.</li>");
+        f_list.push("<li class=\"no-membership\">Geen verbindingen ivm werkplaatsen.</li>");
+    }
+    
+    // Ivm Woonplaats
+    var sizeWoon = Object.size(relatieWoon);
+    f_list.push("<h2>Woonplaatsen (" + sizeWoon + ")</h2>");
+    if (sizeWoon > 0) {
+        f_list = f_list.concat(createList(relatieWoon));
+    } else {
+        f_list.push("<li class=\"no-membership\">Geen verbindingen ivm woonplaatsen.</li>");
     }
     
     // 5. Markeer de actieve node en teken de grafiek
@@ -567,68 +586,46 @@ function nodeActive(a) {
     // Plaats de nieuwe gegroepeerde lijst in het paneel
     $GP.info_link.find("ul").html(f_list.join(""));
     
-    // 6. Attribuut Weergave Logica
+    // 6. Attribuut Weergave Logica (zoals in je vorige correctie)
     var f_attributes = b.attr; 
+    var e = []; // voor attributenlijst
     
     if (f_attributes.attributes) {
-        var image_attribute = false;
-        if (config.informationPanel.imageAttribute) {
-            image_attribute=config.informationPanel.imageAttribute;
-        }
-    
-        e = [];
-        // Aangepaste lijst met attributen om weer te geven
-// Aangepaste lijst met attributen om weer te geven
-var displayAttributes = [
-    { key: 'type', label: 'Type', isLink: false },
-    { key: 'specifictype', label: 'Specific Type', isLink: false },
-    { key: 'beroep', label: 'Beroep', isLink: false }, // Inclusief 'beroep'
-    { key: 'wikidatarecord', label: 'Wikidata Record', isLink: true, displayLabel: 'Wikidata Record' },
-    { key: 'wikipediarecord', label: 'Wikipedia Link', isLink: true, displayLabel: 'Wikipedia Link' },
-    { key: 'wikicommonsrecord', label: 'Wikicommons Link', isLink: true, displayLabel: 'Wikicommons Link' }
-];
-
-// Voeg de geprioriteerde attributen en links toe
-for (var i = 0; i < displayAttributes.length; i++) {
-    var attrConfig = displayAttributes[i];
-    var attrKey = attrConfig.key;
-    var attrValue = f_attributes.attributes[attrKey];
-    
-    if (attrValue) {
-        var h = '';
+        var image_attribute = config.informationPanel.imageAttribute || false;
         
-        // *** WIJZIGING: DE SPECIALE LOGICA VOOR 'BEROEP' IS VERWIJDERD. ***
-        // De waarde wordt nu als één doorlopende string behandeld, gescheiden door een komma.
-        // De browser zal de tekst nu automatisch laten teruglopen (word-wrap) als deze te lang is.
+        // --- DATA ATTRIBUTEN ---
+        // Hier mappen we de velden uit jouw data.json naar de tekst die je wilt tonen in het info-paneel.
+        // Dit is de correctie uit onze vorige stap, geïntegreerd.
+        
+        // 1. IMAGE (Afbeelding tonen)
+        if (f_attributes.attributes['image']) {
+            e.push('<div style="margin-bottom:15px;"><img src="' + f_attributes.attributes['image'] + '" style="max-width:100%; border-radius:5px;" alt="' + b.label + '" /></div>');
+        }
 
-        // --- LOGICA VOOR LINKS ---
-        if (attrConfig.isLink) {
-            h = '<span><strong>' + attrConfig.label + ':</strong> <a href="' + attrValue + '" target="_blank">' + attrValue + '</a></span>';
-        } 
-        // --- LOGICA VOOR ALLE ANDERE REGULIERE ATTRIBUTEN (INCL. BEROEP) ---
-        else {
-            h = '<span><strong>' + attrConfig.label + ':</strong> ' + attrValue + '</span>';
+        // 2. WIKIDATA LINK
+        e.push('<div style="margin-bottom:8px;"><strong>Wikidata:</strong> <a href="https://www.wikidata.org/wiki/' + b.id + '" target="_blank" style="color:#0078ff; text-decoration:none;">Bekijk op Wikidata (' + b.id + ')</a></div>');
+
+        // 3. SPECIFIEKE VELDEN TONEN
+        var fieldMapping = {
+            "type": "Type",
+            "bijhorendlandlabel": "Bijhorend land",
+            "birthplacelabel": "Geboorteplaats",
+            "birthcountrylabel": "Geboorteland",
+            "deathplacelabel": "Plaats van overlijden",
+            "deathcountrylabel": "Land van overlijden"
+        };
+
+        for (var key in fieldMapping) {
+            var val = f_attributes.attributes[key];
+            if (val && val !== "" && val !== "null") {
+                e.push('<span><strong>' + fieldMapping[key] + ':</strong> ' + val + '</span><br/>');
+            }
         }
         
-        e.push(h);
-    }
-}
-// NIEUWE CODE - einde van de for loop
+        // --- TITEL WEERGAVE (Fix van de vorige stap) ---
+        $GP.info_name.html("<div><span onmouseover=\"sigInst._core.plotter.drawHoverNode(sigInst._core.graph.nodesIndex['" + b.id + '\'])" onmouseout="sigInst.refresh()">' + b.label + "</span></div>");
         
-        // Verwerk de image_attribute als een speciale link/weergave
-        if (image_attribute && f_attributes.attributes[image_attribute]) {
-            var image_url = f_attributes.attributes[image_attribute];
-            var image_link_html = '<span><strong>Afbeelding URL:</strong> <a href="' + image_url + '" target="_blank">Directe link</a></span>';
-            e.push(image_link_html);
-
-            // Toon de naam en de afbeelding
-        	$GP.info_name.html("<div><img src=" + image_url + " style=\"width: 60px; height: 60px; object-fit: cover; margin-right: 5px; vertical-align:middle;\" /> <span onmouseover=\"sigInst._core.plotter.drawHoverNode(sigInst._core.graph.nodesIndex['" + b.id + '\'])" onmouseout="sigInst.refresh()">' + b.label + "</span></div>");
-        } else {
-        	$GP.info_name.html("<div><span onmouseover=\"sigInst._core.plotter.drawHoverNode(sigInst._core.graph.nodesIndex['" + b.id + '\'])" onmouseout="sigInst.refresh()">' + b.label + "</span></div>");
-        }
-        
-        // Geef alle attributen en links weer
-        $GP.info_data.html(e.join("<br/>"))
+        $GP.info_data.html(e.join(""));
     }
     
     // 7. Het informatiepaneel tonen
